@@ -20,7 +20,7 @@ public class UserService {
 	public User registerUser(User user) {
 		// Business Rule: Check if email is already taken
 		Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
-		if(existingUser.isEmpty()) {
+		if(existingUser.isPresent()) {
 			throw new RuntimeException("Email is already registered!");
 		}
 		
