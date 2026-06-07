@@ -20,4 +20,9 @@ public class FlightService {
 	public List<Flight> getAllFlights() {
 		return flightRepository.findAll();
 	}
+	
+	// Business Logic: Search flights by source and destination cities
+	public List<Flight> serchFlights(String source, String destination) {
+		return flightRepository.findBySourceAndDestination(source, destination);
+	}
 }
