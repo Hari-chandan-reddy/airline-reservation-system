@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hari.airline.backend.entity.Flight;
@@ -26,5 +27,12 @@ public class FlightController {
 		List<Flight> availableFlights = flightService.getAllFlights();
 
 		return ResponseEntity.ok(availableFlights);
+	}
+	
+	@GetMapping("/search")
+	public ResponseEntity<List<Flight>> searchFlights(@RequestParam String source, @RequestParam String destination) {
+		List<Flight> resultFlights = flightService.serchFlights(source, destination);
+		
+		return ResponseEntity.ok(resultFlights);
 	}
 }
