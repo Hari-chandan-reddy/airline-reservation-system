@@ -1,4 +1,4 @@
-USE airline_db;
+CREATE DATABASE airline_db;
 
 
 CREATE TABLE User (
@@ -67,3 +67,5 @@ CREATE TABLE Payment (
     payment_status VARCHAR(20) DEFAULT 'Pending',
     FOREIGN KEY (booking_id) REFERENCES Booking(booking_id) ON DELETE CASCADE
 );
+
+ALTER TABLE Flight_Seat ADD COLUMN price DECIMAL(10, 2) NOT NULL;
