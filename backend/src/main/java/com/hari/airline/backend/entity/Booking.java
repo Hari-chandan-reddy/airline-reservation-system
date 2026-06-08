@@ -31,7 +31,7 @@ public class Booking {
     @JoinColumn(name = "flight_id", nullable = false)
     private Flight flight;
 	
-	@Column(name = "booking_date", insertable = false, updatable = false)
+	@Column(name = "booking_date")
 	private LocalDateTime bookingDate;
 	
 	@Column(name = "booking_status")
