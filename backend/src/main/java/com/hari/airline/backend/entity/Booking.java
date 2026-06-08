@@ -32,7 +32,7 @@ public class Booking {
     private Flight flight;
 	
 	@Column(name = "booking_date")
-	private LocalDateTime bookingDate;
+	private LocalDateTime bookingDate = LocalDateTime.now();
 	
 	@Column(name = "booking_status")
 	private String bookingStatus = "Pending";
