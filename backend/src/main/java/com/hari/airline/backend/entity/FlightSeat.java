@@ -1,5 +1,7 @@
 package com.hari.airline.backend.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,4 +34,7 @@ public class FlightSeat {
 	
 	@Column(name = "status", length = 20)
 	private String status = "Available";
+	
+	@Column(name = "price", nullable = false)
+	private BigDecimal price;
 }

@@ -1,13 +1,21 @@
 package com.hari.airline.backend.service;
 
+import java.math.BigDecimal;
+
 import org.springframework.stereotype.Service;
 
 import com.hari.airline.backend.dto.BookingRequestDTO;
 import com.hari.airline.backend.entity.Booking;
 import com.hari.airline.backend.entity.Flight;
+import com.hari.airline.backend.entity.FlightSeat;
+import com.hari.airline.backend.entity.Passenger;
+import com.hari.airline.backend.entity.Payment;
 import com.hari.airline.backend.entity.User;
 import com.hari.airline.backend.repository.BookingRepository;
 import com.hari.airline.backend.repository.FlightRepository;
+import com.hari.airline.backend.repository.FlightSeatRepository;
+import com.hari.airline.backend.repository.PassengerRepository;
+import com.hari.airline.backend.repository.PaymentRepository;
 import com.hari.airline.backend.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -17,11 +25,17 @@ public class BookingService {
 	private final BookingRepository bookingRepository;
 	private final UserRepository userRepository;
 	private final FlightRepository flightRepository;
+	private final FlightSeatRepository flightSeatRepository;
+	private final PassengerRepository passengerRepository;
+	private final PaymentRepository paymentRepository;
 	
-	public BookingService(BookingRepository bookingRepository, UserRepository userRepository, FlightRepository flightRepository) {
+	public BookingService(BookingRepository bookingRepository, UserRepository userRepository, FlightRepository flightRepository, FlightSeatRepository flightSeatRepository, PassengerRepository passengerRepository, PaymentRepository paymentRepository) {
 		this.bookingRepository = bookingRepository;
 		this.userRepository = userRepository;
 		this.flightRepository = flightRepository;
+		this.flightSeatRepository = flightSeatRepository;
+		this.passengerRepository = passengerRepository;
+		this.paymentRepository = paymentRepository;
 	}
 	
 	@Transactional
@@ -36,16 +50,52 @@ public class BookingService {
 			throw new RuntimeException("Sorry, this flight is fully booked!");
 		}
 		
+		// Validate and Update Flight Seat
+		FlightSeat seat = flightSeatRepository.findByFlightFlightIdAndSeatNumber(dto.getFlightId(), dto.getSeatNumber())
+				.orElseThrow(() -> new RuntimeException("Seat " + dto.getSeatNumber() + " does not exist on this flight."));
+		
+		if(!"Available".equalsIgnoreCase(seat.getStatus())) {
+			throw new RuntimeException("Seat " + dto.getSeatNumber() + " is already booked!");
+		}
+		
+		// Reserve the physical seat
+		seat.setStatus("Booked");
+		flightSeatRepository.save(seat);
+		
+		// Reduce available flight capacity count
 		flight.setTotalSeats(flight.getTotalSeats() - 1);
 		flightRepository.save(flight);
 		
+		// Extract the exact price from the database seat record
+		BigDecimal calculatedPrice = seat.getPrice();
+		
+		// Create and Save Booking Record
 		Booking booking = new Booking();
 		booking.setUser(user);
 		booking.setFlight(flight);
-		booking.setTotalAmount(dto.getTotalAmount());
+		booking.setTotalAmount(calculatedPrice);
 		booking.setBookingStatus("Confirmed");
+		Booking savedBooking = bookingRepository.save(booking);
 		
+		// Create and Save Passenger Details
+		Passenger passenger = new Passenger();
+		passenger.setBooking(savedBooking);
+		passenger.setFlightSeat(seat);
+		passenger.setFirstName(dto.getFirstName());
+		passenger.setLastName(dto.getLastName());
+		passenger.setGender(dto.getGender());
+		passenger.setAge(dto.getAge());
+		passenger.setPassportNumber(dto.getPassportNumber());
+		passengerRepository.save(passenger);
 		
-		return bookingRepository.save(booking);
+		// Create and Save Payment Transaction Record
+		Payment payment = new Payment();
+		payment.setBooking(savedBooking);
+		payment.setAmount(calculatedPrice);
+		payment.setPaymentMethod(dto.getPaymentMethod());
+		payment.setPaymentStatus("Success");
+		paymentRepository.save(payment);
+		
+		return savedBooking;
 	}
 }
