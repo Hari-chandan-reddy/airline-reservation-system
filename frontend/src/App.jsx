@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
@@ -20,8 +21,11 @@ function App() {
       <Navbar user={user} onLogout={handleLogout} />
       
       <Routes>
+        {/* Registration View Access Gate */}
+        <Route path="/" element={!user ? <Register /> : <Navigate to="/flights" />} />
+
         {/* Conditional Routing: If not logged in, show Login. If logged in, redirect to flights engine */}
-        <Route path="/" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/flights" />} />
+        <Route path="/login" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/flights" />} />
         
         {/* Protected Routing paths */}
         <Route path="/flights" element={user ? <Home user={user} /> : <Navigate to="/" />} />

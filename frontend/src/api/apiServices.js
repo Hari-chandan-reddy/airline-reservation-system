@@ -14,12 +14,11 @@ const searchFlights = async (source, destination) => {
   return response.data;
 };
 
-// 3. User Login validation against database records
-const loginUser = async (email) => {
-  const response = await apiClient.get('/users');
-  const user = response.data.find(u => u.email === email);
-  if (!user) throw new Error("Authentication failed");
-  return user;
+// 3. User Login validation against database records via POST payload
+const loginUser = async (email, password) => {
+  // Pass both email and password as an object body payload to match the Java entity expectation
+  const response = await apiClient.post('/auth/login', { email, password });
+  return response.data;
 };
 
 // 4. Securely transmit Passenger manifest details
@@ -28,9 +27,17 @@ const createBooking = async (bookingData) => {
   return response.data;
 };
 
+// 5. New User Registration handling POST payload (Hashed on backend)
+const registerUser = async (fullName, email, password) => {
+  // Payloads map perfectly to the Java 'User' entity fields: fullName, email, password
+  const response = await apiClient.post('/auth/register', { fullName, email, password });
+  return response.data;
+}
+
 export {
   getAllFlights,
   searchFlights,
   loginUser,
   createBooking,
+  registerUser
 };

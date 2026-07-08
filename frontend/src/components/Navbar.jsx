@@ -29,7 +29,7 @@ function Navbar({ user, onLogout }) {
             My Bookings
           </Link>
           <Link to="/profile" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-            Welcome, {user.name}
+            Welcome, {user.fullName}
           </Link>
           <button onClick={onLogout} style={{
             backgroundColor: '#ef4444', 
