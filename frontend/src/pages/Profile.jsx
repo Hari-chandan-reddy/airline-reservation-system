@@ -5,7 +5,7 @@ function Profile({ user }) {
     <div style={{ padding: '40px', fontFamily: 'sans-serif' }}>
       <h2>Account Settings</h2>
       <p><strong>User ID:</strong> {user?.userId}</p>
-      <p><strong>Name:</strong> {user?.name}</p>
+      <p><strong>Name:</strong> {user?.fullName}</p>
       <p><strong>Email:</strong> {user?.email}</p>
     </div>
   );
