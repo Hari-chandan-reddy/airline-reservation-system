@@ -42,7 +42,7 @@ function App() {
         
         {/* Protected Routing paths */}
         <Route path="/flights" element={user ? <Home user={user} /> : <Navigate to="/" />} />
-        <Route path="/bookings" element={user ? <Bookings /> : <Navigate to="/" />} />
+        <Route path="/bookings" element={user ? <Bookings user={user} /> : <Navigate to="/" />} />
         <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/" />} />
       </Routes>
     </Router>

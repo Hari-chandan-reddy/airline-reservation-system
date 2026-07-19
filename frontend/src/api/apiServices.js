@@ -40,11 +40,17 @@ const getFlightSeats = async (flightId) => {
   return response.data;
 };
 
+const getUserBookings = async (userId) => {
+  const response = await apiClient.get(`/bookings/user/${userId}`);
+  return response.data;
+};
+
 export {
   getAllFlights,
   searchFlights,
   loginUser,
   createBooking,
   registerUser,
-  getFlightSeats
+  getFlightSeats,
+  getUserBookings
 };

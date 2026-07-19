@@ -113,7 +113,7 @@ function Home({ user }) {
         setBookingSuccess('');
         setSelectedFlight(null);
         loadAllFlights();
-      }, 3000);
+      }, 500);
     } catch (err) {
       setError(err.response?.data || 'Transaction aborted. Please check seat allocation parameters.');
     } finally {

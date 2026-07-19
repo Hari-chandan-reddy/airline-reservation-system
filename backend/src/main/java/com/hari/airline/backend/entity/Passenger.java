@@ -1,5 +1,8 @@
 package com.hari.airline.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,6 +18,7 @@ import lombok.Data;
 @Entity
 @Table(name = "Passenger")
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Passenger {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +27,7 @@ public class Passenger {
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "booking_id")
+	@JsonBackReference
 	private Booking booking;
 	
 	@OneToOne(fetch = FetchType.LAZY)

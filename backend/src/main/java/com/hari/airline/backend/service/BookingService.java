@@ -1,6 +1,7 @@
 package com.hari.airline.backend.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -97,5 +98,22 @@ public class BookingService {
 		paymentRepository.save(payment);
 		
 		return savedBooking;
+	}
+	
+	public List<Booking> getBookingsByUserId(Long userId) {
+		List<Booking> bookings = bookingRepository.findByUserUserId(userId);
+		
+		// Trigger lazy loading explicitly for nested properties so Jackson can serialize them
+		for (Booking b : bookings) {
+			if (b.getPassengers() != null) {
+				for (Passenger p : b.getPassengers()) {
+					if (p.getFlightSeat() != null) {
+						p.getFlightSeat().getSeatNumber(); // Forces loading the seat details
+					}
+				}
+			}
+		}
+		
+		return bookings;
 	}
 }
