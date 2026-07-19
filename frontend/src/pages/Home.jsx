@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllFlights, searchFlights, createBooking } from '../api/apiServices';
+import { getAllFlights, searchFlights, createBooking, getFlightSeats } from '../api/apiServices';
 
 function Home({ user }) {
   // Flight Search & Grid States
@@ -11,6 +11,7 @@ function Home({ user }) {
 
   // Active Selection Workspace State
   const [selectedFlight, setSelectedFlight] = useState(null);
+  const [flightSeats, setFlightSeats] = useState([]);
 
   // Form Input Mapping matches the exact backend BookingRequestDTO expectation
   const [seatNumber, setSeatNumber] = useState('');
@@ -26,6 +27,13 @@ function Home({ user }) {
     loadAllFlights();
   }, []);
 
+  // Fetch seats whenever a flight is selected
+  useEffect(() => {
+    if (selectedFlight) {
+      fetchSeatsForFlight(selectedFlight.flightId);
+    }
+  }, [selectedFlight]);
+
   const loadAllFlights = async () => {
     setLoading(true);
     setError('');
@@ -36,6 +44,15 @@ function Home({ user }) {
       setError('Could not establish data network sync. Check backend server statuses.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSeatsForFlight = async (flightId) => {
+    try {
+      const data = await getFlightSeats(flightId);
+      setFlightSeats(data);
+    } catch (err) {
+      setError('Failed to load seat map configurations for this aircraft.');
     }
   };
 
@@ -60,16 +77,19 @@ function Home({ user }) {
     loadAllFlights();
   };
 
-  // Submit Flattened DTO Payload to Spring Boot Backend
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
+    if (!seatNumber) {
+      setError('Please select a preferred seat from the aircraft map layout before checking out.');
+      return;
+    }
     setLoading(true);
     setError('');
 
     const bookingPayload = {
       userId: user.userId,
       flightId: selectedFlight.flightId,
-      seatNumber: seatNumber.trim(),
+      seatNumber,
       firstName,
       lastName,
       gender,
@@ -92,7 +112,7 @@ function Home({ user }) {
       setTimeout(() => {
         setBookingSuccess('');
         setSelectedFlight(null);
-        loadAllFlights(); // Refresh remaining catalog rows count
+        loadAllFlights();
       }, 3000);
     } catch (err) {
       setError(err.response?.data || 'Transaction aborted. Please check seat allocation parameters.');
@@ -142,54 +162,148 @@ function Home({ user }) {
 
           {!loading && flights.length > 0 && (
             <div>
-              <h3 style={{ color: '#1e3a8a', marginBottom: '15px' }}>Flight Deployments</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#1e3a8a', color: 'white', textAlign: 'left' }}>
-                    <th style={{ padding: '14px' }}>Flight No</th>
-                    <th style={{ padding: '14px' }}>Airline</th>
-                    <th style={{ padding: '14px' }}>Route</th>
-                    <th style={{ padding: '14px' }}>Departure Time</th>
-                    <th style={{ padding: '14px' }}>Action</th>
+            <h3 style={{ color: '#1e3a8a', marginBottom: '15px' }}>Flight Deployments</h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#1e3a8a', color: 'white', textAlign: 'left' }}>
+                  <th style={{ padding: '14px' }}>Flight No</th>
+                  <th style={{ padding: '14px' }}>Airline</th>
+                  <th style={{ padding: '14px' }}>Route</th>
+                  <th style={{ padding: '14px' }}>Departure Time</th>
+                  <th style={{ padding: '14px' }}>Arrival Time</th>
+                  <th style={{ padding: '14px' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flights.map((flight) => (
+                  <tr key={flight.flightId} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: 'white' }}>
+                    <td style={{ padding: '14px', fontWeight: 'bold', color: '#0f172a' }}>{flight.flightNumber}</td>
+                    <td style={{ padding: '14px', color: '#334155' }}>{flight.airlineName}</td>
+                    <td style={{ padding: '14px', color: '#334155', fontWeight: '500' }}>
+                      {flight.source} ➔ {flight.destination}
+                    </td>
+                    <td style={{ padding: '14px', fontSize: '14px', color: '#475569' }}>{flight.departureTime}</td>
+                    <td style={{ padding: '14px', fontSize: '14px', color: '#475569' }}>{flight.arrivalTime}</td>
+                    <td style={{ padding: '14px' }}>
+                      <button style={{
+                        backgroundColor: '#10b981', color: 'white', border: 'none',
+                        padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }} onClick={() => setSelectedFlight(flight)}>
+                        Book Ticket
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {flights.map((flight) => (
-                    <tr key={flight.flightId} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: 'white' }}>
-                      <td style={{ padding: '14px', fontWeight: 'bold' }}>{flight.flightNumber}</td>
-                      <td style={{ padding: '14px' }}>{flight.airlineName}</td>
-                      <td style={{ padding: '14px', fontWeight: '500' }}>{flight.source} ➔ {flight.destination}</td>
-                      <td style={{ padding: '14px', fontSize: '14px' }}>{flight.departureTime}</td>
-                      <td style={{ padding: '14px' }}>
-                        <button onClick={() => setSelectedFlight(flight)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
-                          Book Ticket
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
           )}
         </div>
       ) : (
         
         /* VIEW STATE 2: Passenger Manifest Checkout Screen */
-        <div style={{ maxWidth: '600px', margin: '0 auto', backgroundColor: '#ffffff', padding: '35px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-          <button onClick={() => setSelectedFlight(null)} style={{ backgroundColor: '#64748b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px', fontWeight: 'bold' }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', backgroundColor: '#ffffff', padding: '35px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+          <button onClick={() => { setSelectedFlight(null); setSeatNumber(''); }} style={{ backgroundColor: '#64748b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px', fontWeight: 'bold' }}>
             ➔ Back to Flight Listings
           </button>
           
-          <h3 style={{ color: '#1e3a8a', margin: '0 0 5px 0' }}>Passenger Manifest Documentation</h3>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
-            Securing seats on <strong>{selectedFlight.flightNumber}</strong> ({selectedFlight.source} to {selectedFlight.destination})
+          <h3 style={{ color: '#1e3a8a', margin: '0 0 5px 0' }}>Passenger Manifest & Seat Selection</h3>
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '25px' }}>
+            Securing configuration details on <strong>{selectedFlight.flightNumber}</strong> ({selectedFlight.source} to {selectedFlight.destination})
           </p>
 
           {bookingSuccess && <p style={{ color: '#10b981', backgroundColor: '#ecfdf5', padding: '12px', borderRadius: '6px', fontWeight: 'bold' }}>{bookingSuccess}</p>}
           {error && <p style={{ color: '#ef4444', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '6px', fontWeight: 'bold' }}>{error}</p>}
 
-          <form onSubmit={handleConfirmBooking}>
+          {/* VISUAL SEAT MAP COMPONENT GRID */}
+          <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '25px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#334155' }}>Select Your Preferred Seat:</h4>
+            
+            {/* Compact Status Indicator Legend */}
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', fontSize: '12px', fontWeight: 'bold' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '12px', height: '12px', backgroundColor: '#10b981', borderRadius: '3px' }}></div> Available</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '12px', height: '12px', backgroundColor: '#ef4444', borderRadius: '3px' }}></div> Booked</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '12px', height: '12px', backgroundColor: '#1e3a8a', borderRadius: '3px' }}></div> Selected</div>
+            </div>
 
+            {/* Simulated Aircraft Body Container */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              padding: '25px 15px',
+              borderRadius: '12px',
+              border: '2px solid #cbd5e1',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+            }}>
+              {/* 6-Column Grid Layout (A A A [Aisle Space] B B B) */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(3, 25px) 15px repeat(3, 25px)', 
+                gap: '10px 8px', 
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
+                {flightSeats.map((seat, index) => {
+                  const isBooked = !"Available".equalsIgnoreCase(seat.status);
+                  const isSelected = seatNumber === seat.seatNumber;
+                  
+                  let bgColor = '#10b981'; // Green (Available)
+                  if (isBooked) bgColor = '#ef4444'; // Red (Booked)
+                  if (isSelected) bgColor = '#1e3a8a'; // Deep Blue (Selected)
+
+                  // Add a blank spacer row to separate columns into a realistic left/right aisle configuration
+                  const showAisleSpacer = index % 6 === 3;
+
+                  return (
+                    <React.Fragment key={seat.flightSeatId}>
+                      {/* Inject a label or empty space to represent the cabin aisle walkway */}
+                      {showAisleSpacer && (
+                        <div style={{ gridColumn: '4', textAlign: 'center', color: '#94a3b8', fontSize: '10px', fontWeight: 'bold' }}>
+                          |
+                        </div>
+                      )}
+                      
+                      <button
+                        type="button"
+                        disabled={isBooked}
+                        onClick={() => setSeatNumber(seat.seatNumber)}
+                        title={`Seat ${seat.seatNumber} - Class: ${seat.seatClass || 'Economy'} - Price: ₹${seat.price}`} // Native browser hover tooltip
+                        style={{
+                          backgroundColor: bgColor,
+                          color: 'white',
+                          border: 'none',
+                          height: '25px',
+                          width: '25px',
+                          borderRadius: '6px',
+                          fontWeight: 'bold',
+                          fontSize: '11px',
+                          cursor: isBooked ? 'not-allowed' : 'pointer',
+                          boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #1e3a8a' : '0 1px 2px rgba(0,0,0,0.15)',
+                          transition: 'transform 0.1s ease, background-color 0.2s',
+                          transform: isSelected ? 'scale(1.05)' : 'none'
+                        }}
+                      >
+                        {seat.seatNumber}
+                      </button>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {seatNumber && (
+              <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '14px' }}>Selected Seat:</span>
+                <span style={{ backgroundColor: '#1e3a8a', color: 'white', padding: '6px 14px', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                  {seatNumber}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleConfirmBooking}>
             <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>First Name</label>
@@ -218,11 +332,6 @@ function Home({ user }) {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Seat Number</label>
-              <input type="text" placeholder="e.g. 12A, 14F (Must exist in database)" required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} value={seatNumber} onChange={e => setSeatNumber(e.target.value)} />
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Passport Number</label>
               <input type="text" required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} value={passportNumber} onChange={e => setPassportNumber(e.target.value)} />
             </div>
@@ -245,6 +354,13 @@ function Home({ user }) {
       )}
     </div>
   );
+}
+
+// Helper logic to safely evaluate case insensitivity in JavaScript
+if (!String.prototype.equalsIgnoreCase) {
+  String.prototype.equalsIgnoreCase = function (str) {
+    return this.toLowerCase() === str?.toLowerCase();
+  };
 }
 
 export default Home;

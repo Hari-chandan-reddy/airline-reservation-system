@@ -34,10 +34,17 @@ const registerUser = async (fullName, email, password) => {
   return response.data;
 }
 
+// 6. Fetch all seats assigned to a specific flight ID
+const getFlightSeats = async (flightId) => {
+  const response = await apiClient.get(`/flights/${flightId}/seats`);
+  return response.data;
+};
+
 export {
   getAllFlights,
   searchFlights,
   loginUser,
   createBooking,
-  registerUser
+  registerUser,
+  getFlightSeats
 };

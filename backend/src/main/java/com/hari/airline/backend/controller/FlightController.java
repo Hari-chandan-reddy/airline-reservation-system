@@ -5,11 +5,13 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hari.airline.backend.entity.Flight;
+import com.hari.airline.backend.entity.FlightSeat;
 import com.hari.airline.backend.service.FlightService;
 
 @RestController
@@ -34,5 +36,12 @@ public class FlightController {
 		List<Flight> resultFlights = flightService.serchFlights(source, destination);
 		
 		return ResponseEntity.ok(resultFlights);
+	}
+	
+	@GetMapping("/{flightId}/seats")
+	public ResponseEntity<List<FlightSeat>> getSeatsByFlightId(@PathVariable Long flightId) {
+		List<FlightSeat> seats = flightService.getSeatsByFlightId(flightId);
+		
+		return ResponseEntity.ok(seats);
 	}
 }
