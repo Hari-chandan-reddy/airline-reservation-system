@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,5 +40,15 @@ public class BookingController {
 	public ResponseEntity<List<Booking>> getUserBookings(@PathVariable Long userId) {
 		List<Booking> userBookings = bookingService.getBookingsByUserId(userId);
 		return ResponseEntity.ok(userBookings);
+	}
+	
+	@PutMapping("/{bookingId}/cancel")
+	public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
+		try {
+			String message = bookingService.cancelBooking(bookingId);
+			return ResponseEntity.ok(message);
+		} catch (RuntimeException rtEx) {
+			return ResponseEntity.badRequest().body(rtEx.getMessage());
+		}
 	}
 }

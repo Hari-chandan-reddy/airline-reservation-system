@@ -40,10 +40,16 @@ const getFlightSeats = async (flightId) => {
   return response.data;
 };
 
+// 7. Fetch all bookings for a specific user ID
 const getUserBookings = async (userId) => {
   const response = await apiClient.get(`/bookings/user/${userId}`);
   return response.data;
 };
+
+const cancelBooking = async (bookingId) => {
+  const response = await apiClient.put(`/bookings/${bookingId}/cancel`);
+  return response.data;
+}
 
 export {
   getAllFlights,
@@ -52,5 +58,6 @@ export {
   createBooking,
   registerUser,
   getFlightSeats,
-  getUserBookings
+  getUserBookings,
+  cancelBooking
 };

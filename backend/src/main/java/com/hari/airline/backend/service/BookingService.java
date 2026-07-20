@@ -1,6 +1,7 @@
 package com.hari.airline.backend.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -115,5 +116,39 @@ public class BookingService {
 		}
 		
 		return bookings;
+	}
+	
+	@Transactional
+	public String cancelBooking(Long bookingId) {
+		Booking booking = bookingRepository.findById(bookingId)
+				.orElseThrow(() -> new RuntimeException("Bookings not found with ID: " + bookingId));
+		
+		if ("CANCELLED".equalsIgnoreCase(booking.getBookingStatus())) {
+			throw new RuntimeException("This booking is already cancelled.");
+		}
+		
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime departureTime = booking.getFlight().getDepartureTime();
+		
+		if (departureTime != null && now.plusHours(24).isAfter(departureTime)) {
+			throw new RuntimeException("Cancellation failed: Bookings can only be cancelled at least 24 hours prior flight departure.");
+		}
+		
+		booking.setBookingStatus("CANCELLED");
+		bookingRepository.save(booking);
+		
+		if (booking.getPassengers() != null) {
+			for (Passenger passenger : booking.getPassengers()) {
+				FlightSeat seat = passenger.getFlightSeat();
+				if (seat != null) {
+					seat.setStatus("Available");
+					flightSeatRepository.save(seat);
+					
+					passenger.setFlightSeat(null);
+				}
+			}
+		}
+		
+		return "Booking cancelled successfully.";
 	}
 }

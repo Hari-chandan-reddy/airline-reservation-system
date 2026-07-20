@@ -30,8 +30,8 @@ public class Passenger {
 	@JsonBackReference
 	private Booking booking;
 	
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "flight_seat_id", unique = true)
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "flight_seat_id")
 	private FlightSeat flightSeat;
 	
 	@Column(name = "first_name", nullable = false, length = 50)

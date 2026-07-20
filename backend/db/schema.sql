@@ -40,6 +40,7 @@ CREATE TABLE Flight_Seat (
     seat_number VARCHAR(10) NOT NULL,
     seat_class VARCHAR(20) DEFAULT 'Economy',
     status VARCHAR(20) DEFAULT 'Available',
+    price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (flight_id) REFERENCES Flight(flight_id) ON DELETE CASCADE,
     UNIQUE KEY unique_flight_seat (flight_id, seat_number)
 );
@@ -48,7 +49,7 @@ CREATE TABLE Flight_Seat (
 CREATE TABLE Passenger (
     passenger_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     booking_id BIGINT,
-    flight_seat_id BIGINT UNIQUE,
+    flight_seat_id BIGINT,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     gender VARCHAR(10),
@@ -67,5 +68,3 @@ CREATE TABLE Payment (
     payment_status VARCHAR(20) DEFAULT 'Pending',
     FOREIGN KEY (booking_id) REFERENCES Booking(booking_id) ON DELETE CASCADE
 );
-
-ALTER TABLE Flight_Seat ADD COLUMN price DECIMAL(10, 2) NOT NULL;
