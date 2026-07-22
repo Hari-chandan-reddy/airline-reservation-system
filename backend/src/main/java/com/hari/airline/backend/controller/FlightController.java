@@ -33,7 +33,7 @@ public class FlightController {
 	
 	@GetMapping("/search")
 	public ResponseEntity<List<Flight>> searchFlights(@RequestParam String source, @RequestParam String destination) {
-		List<Flight> resultFlights = flightService.serchFlights(source, destination);
+		List<Flight> resultFlights = flightService.searchFlights(source, destination);
 		
 		return ResponseEntity.ok(resultFlights);
 	}

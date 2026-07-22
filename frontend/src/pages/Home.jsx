@@ -77,6 +77,14 @@ function Home({ user }) {
     loadAllFlights();
   };
 
+  // Helper check: Returns true if flight departure is within 2 hours from current time
+  const isBookingClosed = (departureTimeString) => {
+    if (!departureTimeString) return false;
+    const departureDate = new Date(departureTimeString);
+    const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    return departureDate <= twoHoursFromNow;
+  };
+
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
     if (!seatNumber) {
@@ -175,26 +183,54 @@ function Home({ user }) {
                 </tr>
               </thead>
               <tbody>
-                {flights.map((flight) => (
-                  <tr key={flight.flightId} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: 'white' }}>
-                    <td style={{ padding: '14px', fontWeight: 'bold', color: '#0f172a' }}>{flight.flightNumber}</td>
-                    <td style={{ padding: '14px', color: '#334155' }}>{flight.airlineName}</td>
-                    <td style={{ padding: '14px', color: '#334155', fontWeight: '500' }}>
-                      {flight.source} ➔ {flight.destination}
-                    </td>
-                    <td style={{ padding: '14px', fontSize: '14px', color: '#475569' }}>{flight.departureTime}</td>
-                    <td style={{ padding: '14px', fontSize: '14px', color: '#475569' }}>{flight.arrivalTime}</td>
-                    <td style={{ padding: '14px' }}>
-                      <button style={{
-                        backgroundColor: '#10b981', color: 'white', border: 'none',
-                        padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }} onClick={() => setSelectedFlight(flight)}>
-                        Book Ticket
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {flights.map((flight) => {
+                  const closed = isBookingClosed(flight.departureTime);
+
+                  return (
+                    <tr key={flight.flightId} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: 'white' }}>
+                      <td style={{ padding: '14px', fontWeight: 'bold', color: '#0f172a' }}>{flight.flightNumber}</td>
+                      <td style={{ padding: '14px', color: '#334155' }}>{flight.airlineName}</td>
+                      <td style={{ padding: '14px', color: '#334155', fontWeight: '500' }}>
+                        {flight.source} ➔ {flight.destination}
+                      </td>
+                      <td style={{ padding: '14px', fontSize: '14px', color: '#475569' }}>{flight.departureTime}</td>
+                      <td style={{ padding: '14px', fontSize: '14px', color: '#475569' }}>{flight.arrivalTime}</td>
+                      <td style={{ padding: '14px' }}>
+                        {closed ? (
+                          <button
+                            disabled
+                            style={{
+                              backgroundColor: '#94a3b8',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                              cursor: 'not-allowed'
+                            }}
+                          >
+                            Booking Closed
+                          </button>
+                        ) : (
+                          <button
+                            style={{
+                              backgroundColor: '#10b981',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => setSelectedFlight(flight)}
+                          >
+                            Book Ticket
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

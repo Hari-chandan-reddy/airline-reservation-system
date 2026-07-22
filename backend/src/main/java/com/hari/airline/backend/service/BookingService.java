@@ -48,6 +48,11 @@ public class BookingService {
 		Flight flight = flightRepository.findWithLockByFlightId(dto.getFlightId())
 				.orElseThrow(() -> new RuntimeException("Flight not fount with ID: " + dto.getFlightId()));
 		
+		LocalDateTime cutoffTime = LocalDateTime.now().plusHours(2);
+	    if (flight.getDepartureTime() == null || flight.getDepartureTime().isBefore(cutoffTime)) {
+	        throw new RuntimeException("Booking closed: Tickets can only be booked at least 2 hours prior to departure.");
+	    }
+		
 		if(flight.getTotalSeats() <= 0) {
 			throw new RuntimeException("Sorry, this flight is fully booked!");
 		}

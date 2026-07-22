@@ -1,5 +1,6 @@
 package com.hari.airline.backend.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -20,14 +21,15 @@ public class FlightService {
 		this.flightSeatRepository = flightSeatRepository;
 	}
 	
-	// Business Logic: Retrieve all flights currently in the system
+	// Business Logic: Retrieve only upcoming flights
 	public List<Flight> getAllFlights() {
-		return flightRepository.findAll();
+		return flightRepository.findByDepartureTimeAfter(LocalDateTime.now());
 	}
 	
 	// Business Logic: Search flights by source and destination cities
-	public List<Flight> serchFlights(String source, String destination) {
-		return flightRepository.findBySourceAndDestination(source, destination);
+	public List<Flight> searchFlights(String source, String destination) {
+		LocalDateTime cutoffTime = LocalDateTime.now().plusHours(2);
+		return flightRepository.findBySourceAndDestinationAndDepartureTimeAfter(source, destination, cutoffTime);
 	}
 	
 	// Business Logic: Retrieve seats by flight ID

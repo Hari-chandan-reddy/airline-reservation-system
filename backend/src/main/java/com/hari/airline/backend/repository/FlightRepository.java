@@ -1,5 +1,6 @@
 package com.hari.airline.backend.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +12,12 @@ import com.hari.airline.backend.entity.Flight;
 import jakarta.persistence.LockModeType;
 
 public interface FlightRepository extends JpaRepository<Flight, Long>{
-	List<Flight> findBySourceAndDestination(String source, String destination);
+	
+	// All flights that haven't departed yet (departure_time > NOW)
+	List<Flight> findByDepartureTimeAfter(LocalDateTime now);
+	
+	// Search results: Flights departing at least 2 hours from now
+	List<Flight> findBySourceAndDestinationAndDepartureTimeAfter(String source, String destination, LocalDateTime cutoffTime);
 	
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	Optional<Flight> findWithLockByFlightId(Long flightId);
