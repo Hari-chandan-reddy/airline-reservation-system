@@ -30,6 +30,9 @@ public class UserService {
 		String hashedPwd = passwordEncoder.encode(user.getPassword());
 		user.setPassword(hashedPwd);
 		
+		// 🔒 SECURITY GUARD: Always force newly registered accounts to default USER role
+		user.setRole("Customer");
+		
 		return userRepository.save(user);
 	}
 	

@@ -22,12 +22,21 @@ function Navbar({ user, onLogout }) {
       {/* Conditional Link Container: Only displays if a user session is active */}
       {user && (
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
+          {/* ADMIN-ONLY DASHBOARD BUTTON */}
+          {(user.role === 'ADMIN' || user.role === 'Admin') && (
+            <Link to="/admin" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
+              Admin Dashboard
+            </Link>
+          )}
+
           <Link to="/flights" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
             Search Flights
           </Link>
+          
           <Link to="/bookings" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
             My Bookings
           </Link>
+
           <Link to="/profile" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
             Welcome, {user.fullName}
           </Link>

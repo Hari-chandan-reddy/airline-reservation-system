@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   // Global Session State: Tracks the logged-in user profile object
@@ -44,6 +45,17 @@ function App() {
         <Route path="/flights" element={user ? <Home user={user} /> : <Navigate to="/" />} />
         <Route path="/bookings" element={user ? <Bookings user={user} /> : <Navigate to="/" />} />
         <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/" />} />
+      
+        <Route 
+          path="/admin"
+          element={
+            user && (user.role === 'ADMIN' || user.role === 'Admin') ? (
+              <AdminDashboard user={user} />
+            ) : (
+              <Navigate to="/flights" replace />
+           )
+          }
+        />
       </Routes>
     </Router>
   );
