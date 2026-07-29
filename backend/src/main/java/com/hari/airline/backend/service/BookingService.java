@@ -156,4 +156,19 @@ public class BookingService {
 		
 		return "Booking cancelled successfully.";
 	}
+	
+	// Retrieve all system bookings
+    public List<Booking> getAllBookingsAdmin() {
+        return bookingRepository.findAll();
+    }
+
+    // Retrieve passengers for a specific booking
+    public List<Passenger> getPassengersByBookingId(Long bookingId) {
+        return passengerRepository.findByBookingBookingId(bookingId);
+    }
+
+    // Retrieve payment info for a specific booking
+    public Payment getPaymentByBookingId(Long bookingId) {
+        return paymentRepository.findByBookingBookingId(bookingId);
+    }
 }

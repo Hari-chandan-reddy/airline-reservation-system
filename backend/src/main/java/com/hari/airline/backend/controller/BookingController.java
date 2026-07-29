@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hari.airline.backend.dto.BookingRequestDTO;
 import com.hari.airline.backend.entity.Booking;
+import com.hari.airline.backend.entity.Passenger;
+import com.hari.airline.backend.entity.Payment;
 import com.hari.airline.backend.service.BookingService;
 
 @RestController
@@ -50,5 +52,23 @@ public class BookingController {
 		} catch (RuntimeException rtEx) {
 			return ResponseEntity.badRequest().body(rtEx.getMessage());
 		}
+	}
+	
+	// Admin Endpoint: Get all customer bookings
+	@GetMapping("/admin/all")
+	public ResponseEntity<List<Booking>> getAllBookingsAdmin() {
+		return ResponseEntity.ok(bookingService.getAllBookingsAdmin());
+	}
+	
+	// Admin Endpoint: Get passenger manifest for a booking
+	@GetMapping("/{bookingId}/passengers")
+	public ResponseEntity<List<Passenger>> getPassengersByBooking(@PathVariable Long bookingId) {
+		return ResponseEntity.ok(bookingService.getPassengersByBookingId(bookingId));
+	}
+	
+	// Admin Endpoint: Get payment details for a booking
+	@GetMapping("/{bookingId}/payment")
+	public ResponseEntity<Payment> getPaymentByBooking(@PathVariable Long bookingId) {
+		return ResponseEntity.ok(bookingService.getPaymentByBookingId(bookingId));
 	}
 }
