@@ -39,4 +39,7 @@ public class Flight {
 	
 	@Column(name = "total_seats", nullable = false)
 	private int totalSeats;
+	
+	@Column(name = "status", length = 20)
+	private String status = "Active";
 }

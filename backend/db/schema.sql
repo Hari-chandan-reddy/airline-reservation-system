@@ -68,3 +68,7 @@ CREATE TABLE Payment (
     payment_status VARCHAR(20) DEFAULT 'Pending',
     FOREIGN KEY (booking_id) REFERENCES Booking(booking_id) ON DELETE CASCADE
 );
+
+
+ALTER TABLE Flight 
+ADD COLUMN status VARCHAR(20) DEFAULT 'Active';

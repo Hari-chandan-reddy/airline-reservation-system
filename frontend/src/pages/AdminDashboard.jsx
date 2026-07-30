@@ -26,6 +26,11 @@ const AdminDashboard = () => {
     totalSeats: 0
   });
 
+  const [editingFlight, setEditingFlight] = useState(null);
+  const [updateStatus, setUpdateStatus] = useState('Active');
+  const [updateDeparture, setUpdateDeparture] = useState('');
+  const [updateArrival, setUpdateArrival] = useState('');
+
   useEffect(() => {
     fetchFlights();
     fetchBookings();
@@ -71,7 +76,6 @@ const AdminDashboard = () => {
     setError('');
     setSuccessMsg('');
 
-    // Basic Validation
     if (
       !formData.flightNumber ||
       !formData.airlineName ||
@@ -89,7 +93,6 @@ const AdminDashboard = () => {
       setFlights([...flights, response.data]);
       setSuccessMsg(`Flight ${response.data.flightNumber} added successfully! Seats generated.`);
       
-      // Reset form
       setFormData({
         flightNumber: '',
         airlineName: '',
@@ -113,6 +116,25 @@ const AdminDashboard = () => {
       setSuccessMsg('Flight removed successfully.');
     } catch (err) {
       setError('Failed to delete flight.');
+    }
+  };
+
+  // Function to trigger status update API
+  const handleStatusUpdate = async (flightId) => {
+    try {
+      // Send status, departureTime, and arrivalTime as query params
+      let url = `http://localhost:8080/api/flights/${flightId}/status?status=${updateStatus}`;
+      if (updateDeparture) url += `&departureTime=${updateDeparture}`;
+      if (updateArrival) url += `&arrivalTime=${updateArrival}`;
+
+      const res = await axios.put(url);
+      
+      // Update state in UI
+      setFlights(flights.map(f => (f.flightId || f.id) === flightId ? res.data : f));
+      setSuccessMsg(`Flight #${flightId} updated successfully!`);
+      setEditingFlight(null);
+    } catch (err) {
+      setError('Failed to update flight details.');
     }
   };
 
@@ -196,6 +218,7 @@ const AdminDashboard = () => {
                     <th style={styles.th}>Departure</th>
                     <th style={styles.th}>Arrival</th>
                     <th style={styles.th}>Seats</th>
+                    <th style={styles.th}>Status</th>
                     <th style={styles.th}>Action</th>
                   </tr>
                 </thead>
@@ -212,13 +235,72 @@ const AdminDashboard = () => {
                           <td style={styles.td}>{new Date(f.arrivalTime).toLocaleString()}</td>
                           <td style={styles.td}>{f.totalSeats}</td>
                           <td style={styles.td}>
-                            <button onClick={() => handleDeleteFlight(id)} style={styles.deleteBtn}>Remove</button>
+                            <span style={styles.statusBadge}>{f.status || 'Active'}</span>
+                          </td>
+                          <td style={styles.td}>
+                            {editingFlight === id ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                <select 
+                                  value={updateStatus} 
+                                  onChange={(e) => setUpdateStatus(e.target.value)}
+                                  style={{ padding: '4px', borderRadius: '4px' }}
+                                >
+                                  <option value="Active">Active</option>
+                                  <option value="Delayed">Delayed</option>
+                                  <option value="Cancelled">Cancelled</option>
+                                  <option value="Boarding">Boarding</option>
+                                </select>
+
+                                <input 
+                                  type="datetime-local" 
+                                  value={updateDeparture} 
+                                  onChange={(e) => setUpdateDeparture(e.target.value)}
+                                  style={{ padding: '4px', fontSize: '11px' }}
+                                />
+                                <input 
+                                  type="datetime-local" 
+                                  value={updateArrival} 
+                                  onChange={(e) => setUpdateArrival(e.target.value)}
+                                  style={{ padding: '4px', fontSize: '11px' }}
+                                />
+
+                                <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
+                                  <button 
+                                    onClick={() => handleStatusUpdate(id)} 
+                                    style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  >
+                                    Save
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditingFlight(null)} 
+                                    style={{ backgroundColor: '#64748b', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button 
+                                  onClick={() => { 
+                                    setEditingFlight(id); 
+                                    setUpdateStatus(f.status || 'Active');
+                                    setUpdateDeparture(f.departureTime ? f.departureTime.slice(0, 16) : '');
+                                    setUpdateArrival(f.arrivalTime ? f.arrivalTime.slice(0, 16) : '');
+                                  }}
+                                  style={{ backgroundColor: '#0284c7', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                                >
+                                  Edit Schedule/Status
+                                </button>
+                                <button onClick={() => handleDeleteFlight(id)} style={styles.deleteBtn}>Remove</button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
                     })
                   ) : (
-                    <tr><td colSpan="7" style={styles.emptyTd}>No flights registered.</td></tr>
+                    <tr><td colSpan="8" style={styles.emptyTd}>No flights registered.</td></tr>
                   )}
                 </tbody>
               </table>

@@ -83,4 +83,25 @@ public class FlightService {
 		}
 		flightRepository.deleteById(flightId);
 	}
+	
+	// Update status or times for a flight
+	@Transactional
+	public Flight updateFlightStatus(Long flightId, String status, LocalDateTime newDeparture, LocalDateTime newArrival) {
+	    Flight flight = flightRepository.findById(flightId)
+	            .orElseThrow(() -> new RuntimeException("Flight not found with ID: " + flightId));
+
+	    if (status != null && !status.trim().isEmpty()) {
+	        flight.setStatus(status);
+	    }
+	    
+	    if (newDeparture != null) {
+	        flight.setDepartureTime(newDeparture);
+	    }
+	    
+	    if (newArrival != null) {
+	        flight.setArrivalTime(newArrival);
+	    }
+
+	    return flightRepository.save(flight);
+	}
 }
