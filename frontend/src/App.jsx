@@ -23,8 +23,8 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Wipe the user session from localStorage to ensure no residual data remains
-    localStorage.removeItem('loggedUser');
+    // Clear user session from localStorage and React state
+    localStorage.removeItem('token');
     // Clear React state to trigger UI updates and redirect to login
     setUser(null);
   };

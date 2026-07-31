@@ -1,13 +1,19 @@
 package com.hari.airline.backend.controller;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hari.airline.backend.entity.User;
+import com.hari.airline.backend.security.JwtUtils;
 import com.hari.airline.backend.service.UserService;
 
 @RestController
@@ -15,9 +21,11 @@ import com.hari.airline.backend.service.UserService;
 @CrossOrigin(origins = "http://localhost:5173") // Enables React to communicate safely
 public class UserController {
 	private final UserService userService;
+	private final JwtUtils jwtUtils;
 	
-	public UserController(UserService userService) {
+	public UserController(UserService userService, JwtUtils jwtUtils) {
 		this.userService = userService;
+		this.jwtUtils = jwtUtils;
 	}
 	
 	// HTTP POST mapping to handle user registration
@@ -37,9 +45,22 @@ public class UserController {
 		try {
 			// Pass email and raw password inputs to the business layer verification method
 			User authenticatedUser = userService.loginUser(loginRequest.getEmail(), loginRequest.getPassword());
-			return ResponseEntity.ok(authenticatedUser);
+			
+			String token = jwtUtils.generateToken(authenticatedUser.getEmail(), authenticatedUser.getRole());
+			
+			Map<String, Object> response = new HashMap<>();
+			response.put("token", token);
+			response.put("user", authenticatedUser);
+			
+			return ResponseEntity.ok(response);
 		} catch(RuntimeException rtEx) {
 			return ResponseEntity.badRequest().body(rtEx.getMessage());
 		}
 	}
+	
+	@GetMapping
+    public ResponseEntity<List<User>> getAdminUsers() {
+        List<User> adminUsers = userService.getAdminUsers();
+        return ResponseEntity.ok(adminUsers);
+    }
 }

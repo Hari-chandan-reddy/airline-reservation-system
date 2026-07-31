@@ -8,4 +8,22 @@ const apiClient = axios.create({
     },
 });
 
+// Request Interceptor: Automatically attach JWT Token to every outgoing request
+apiClient.interceptors.request.use(
+    (config) => {
+        // Retrieve the token saved during login
+        const token = localStorage.getItem('token');
+        
+        if (token) {
+            // Attach as "Authorization: Bearer <JWT_TOKEN>"
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 export default apiClient;

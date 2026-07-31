@@ -1,5 +1,6 @@
 package com.hari.airline.backend.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -49,4 +50,8 @@ public class UserService {
 		
 		return user; // Success! Return profile metadata
 	}
+	
+	public List<User> getAdminUsers() {
+        return userRepository.findByRole("ADMIN");
+    }
 }

@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import {
+  getAdminFlights,
+  getAdminBookings,
+  getBookingPassengers,
+  getAdminUsers, // Ensure you import your fetch users function from apiServices
+  createFlight,
+  deleteFlight,
+  updateFlightStatus
+} from '../api/apiServices';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('flights'); // 'flights' or 'bookings'
+  const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'bookings', or 'users'
   
+  // Cleaned Users State (Starts empty, populated strictly from DB)
+  const [users, setUsers] = useState([]);
+
   // Flights State
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,12 +45,22 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchFlights();
     fetchBookings();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const data = await getAdminUsers();
+      setUsers(data || []);
+    } catch (err) {
+      console.error('Failed to load user records from database:', err);
+    }
+  };
 
   const fetchFlights = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/flights/admin/all');
-      setFlights(res.data);
+      const data = await getAdminFlights();
+      setFlights(data || []);
       setLoading(false);
     } catch (err) {
       setError('Failed to load flights. Make sure backend is running.');
@@ -49,8 +70,8 @@ const AdminDashboard = () => {
 
   const fetchBookings = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/bookings/admin/all');
-      setBookings(res.data);
+      const data = await getAdminBookings();
+      setBookings(data || []);
     } catch (err) {
       console.error('Failed to load admin bookings.');
     }
@@ -59,16 +80,33 @@ const AdminDashboard = () => {
   const fetchPassengers = async (bookingId) => {
     try {
       setSelectedBookingId(bookingId);
-      const res = await axios.get(`http://localhost:8080/api/bookings/${bookingId}/passengers`);
-      setSelectedBookingPassengers(res.data);
+      const data = await getBookingPassengers(bookingId);
+      setSelectedBookingPassengers(data || []);
     } catch (err) {
       alert('Could not fetch passenger manifest.');
     }
   };
 
+  // Helper function to convert backend dates for datetime-local input
+  const formatForDateTimeLocal = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value
+    }));
   };
 
   const handleAddFlight = async (e) => {
@@ -89,9 +127,9 @@ const AdminDashboard = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8080/api/flights', formData);
-      setFlights([...flights, response.data]);
-      setSuccessMsg(`Flight ${response.data.flightNumber} added successfully! Seats generated.`);
+      const newFlight = await createFlight(formData);
+      setFlights([...flights, newFlight]);
+      setSuccessMsg(`Flight ${newFlight.flightNumber} added successfully! Seats generated.`);
       
       setFormData({
         flightNumber: '',
@@ -111,7 +149,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this flight?')) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/flights/${flightId}`);
+      await deleteFlight(flightId);
       setFlights(flights.filter((f) => (f.flightId || f.id) !== flightId));
       setSuccessMsg('Flight removed successfully.');
     } catch (err) {
@@ -119,18 +157,15 @@ const AdminDashboard = () => {
     }
   };
 
-  // Function to trigger status update API
   const handleStatusUpdate = async (flightId) => {
     try {
-      // Send status, departureTime, and arrivalTime as query params
-      let url = `http://localhost:8080/api/flights/${flightId}/status?status=${updateStatus}`;
-      if (updateDeparture) url += `&departureTime=${updateDeparture}`;
-      if (updateArrival) url += `&arrivalTime=${updateArrival}`;
+      const updatedFlight = await updateFlightStatus(flightId, {
+        status: updateStatus,
+        departureTime: updateDeparture,
+        arrivalTime: updateArrival
+      });
 
-      const res = await axios.put(url);
-      
-      // Update state in UI
-      setFlights(flights.map(f => (f.flightId || f.id) === flightId ? res.data : f));
+      setFlights(flights.map(f => (f.flightId || f.id) === flightId ? updatedFlight : f));
       setSuccessMsg(`Flight #${flightId} updated successfully!`);
       setEditingFlight(null);
     } catch (err) {
@@ -144,7 +179,7 @@ const AdminDashboard = () => {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1 style={styles.title}>Admin Control Center</h1>
-        <p style={styles.subtitle}>System oversight for flights and bookings</p>
+        <p style={styles.subtitle}>System oversight for flights, bookings, and users</p>
       </header>
 
       {/* --- TAB NAVIGATION --- */}
@@ -160,6 +195,12 @@ const AdminDashboard = () => {
           onClick={() => setActiveTab('bookings')}
         >
           📋 Booking Manifests ({bookings.length})
+        </button>
+        <button
+          style={activeTab === 'users' ? styles.activeTab : styles.tab}
+          onClick={() => setActiveTab('users')}
+        >
+          👥 User Directory ({users.length})
         </button>
       </div>
 
@@ -285,8 +326,8 @@ const AdminDashboard = () => {
                                   onClick={() => { 
                                     setEditingFlight(id); 
                                     setUpdateStatus(f.status || 'Active');
-                                    setUpdateDeparture(f.departureTime ? f.departureTime.slice(0, 16) : '');
-                                    setUpdateArrival(f.arrivalTime ? f.arrivalTime.slice(0, 16) : '');
+                                    setUpdateDeparture(formatForDateTimeLocal(f.departureTime));
+                                    setUpdateArrival(formatForDateTimeLocal(f.arrivalTime));
                                   }}
                                   style={{ backgroundColor: '#0284c7', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
                                 >
@@ -355,7 +396,7 @@ const AdminDashboard = () => {
             </table>
           </div>
 
-          {/* Passenger Manifest Modal / Drawer */}
+          {/* Passenger Manifest Drawer */}
           {selectedBookingId && (
             <div style={styles.manifestBox}>
               <h3>Passenger List for Booking #{selectedBookingId}</h3>
@@ -373,6 +414,61 @@ const AdminDashboard = () => {
               <button onClick={() => setSelectedBookingId(null)} style={styles.closeBtn}>Close</button>
             </div>
           )}
+        </section>
+      )}
+
+      {/* ================= USER DIRECTORY TAB ================= */}
+      {activeTab === 'users' && (
+        <section style={styles.card}>
+          <h2 style={styles.cardHeader}>Registered System Users</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={styles.table}>
+              <thead>
+                <tr style={styles.tableHeaderRow}>
+                  <th style={styles.th}>User ID</th>
+                  <th style={styles.th}>Full Name</th>
+                  <th style={styles.th}>Email Address</th>
+                  <th style={styles.th}>Role</th>
+                  <th style={styles.th}>Account Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length > 0 ? (
+                  users.map((u) => {
+                    const userId = u.userId || u.id;
+                    const fullName = u.fullName || u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'N/A';
+                    const role = u.role || 'USER';
+                    const isUserAdmin = role.toUpperCase() === 'ADMIN';
+
+                    return (
+                      <tr key={userId} style={styles.tableRow}>
+                        <td style={styles.td}><strong>#{userId}</strong></td>
+                        <td style={styles.td}>{fullName}</td>
+                        <td style={styles.td}>{u.email}</td>
+                        <td style={styles.td}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            backgroundColor: isUserAdmin ? '#dbeafe' : '#f3f4f6',
+                            color: isUserAdmin ? '#1e40af' : '#374151'
+                          }}>
+                            {role}
+                          </span>
+                        </td>
+                        <td style={styles.td}>
+                          <span style={styles.statusBadge}>{u.status || 'Active'}</span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr><td colSpan="5" style={styles.emptyTd}>No users found in database.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
     </div>
